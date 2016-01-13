@@ -1,5 +1,5 @@
 #!/bin/bash
-# this script is executed on the target machine
+# this script is executed on the TARGET MACHINE
 # blame: barry@productops.com jan 2016
 # BOLT-1611 deploy a looker jar via Sagoku
 # preinst.sh
