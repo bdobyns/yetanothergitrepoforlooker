@@ -6,10 +6,11 @@
 
 case $1 in
     test|prod)
-	git push git@git.${1}.cirrostratus.org:repos/looker.git
+	set -x
+	git push git@git.${1}.cirrostratus.org:repos/looker.git :master
 	;;
     *)
-	echo "you must specify an environment"
+	echo "you must specify an environment, and '$1' is not a sensible choice"
 	exit 7
 	;;
 esac
