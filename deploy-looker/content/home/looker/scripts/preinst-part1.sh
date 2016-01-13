@@ -16,12 +16,14 @@ if [ -z "$WHICHJAVA" ] || [ -z "$JAVABIN" ] ; then
 fi
 
 # SYSCTL --------- --------- --------- --------- --------- --------- ---------
-SYSCTLOOKER=/etc/sysctl.d/87-looker.conf
-if [ ! -f $SYSCTLOOKER ] ; then
-echo >$SYSCTLOOKER <<EOF
-net.ipv4.tcp_keepalive_time=200
-net.ipv4.tcp_keepalive_intvl=200
-net.ipv4.tcp_keepalive_probes=5
+SYSCTL=/etc/sysctl.d/87-looker.conf
+if  [ ! -f $SYSCTL ] || ! grep looker $SYSCTL >/dev/null ; then
+cat >$SYSCTL <<EOF
+# created by the ithaka looker installer
+# $0
+net.ipv4.tcp_keepalive_time = 200
+net.ipv4.tcp_keepalive_intvl = 200
+net.ipv4.tcp_keepalive_probes = 5
 EOF
 fi
 
@@ -34,6 +36,7 @@ sudo groupadd looker
 fi
 
 if ! grep looker /etc/passwd >/dev/null
+then
 sudo useradd -m -g looker looker
 fi
 
