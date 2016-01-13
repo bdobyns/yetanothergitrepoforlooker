@@ -5,5 +5,5 @@
 # postinst.sh
 
 cd ~looker/looker
-./looker start
+./looker start --port=8080
 
