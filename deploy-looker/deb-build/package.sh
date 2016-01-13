@@ -40,8 +40,7 @@ zip watchable-sidecar.jar application.properties
 cat << EOF > ${BUILD_DIR}/DEBIAN/control
 Package: $PACKAGE_NAME
 Version: $VERSION
-Maintainer: Ithaka Sequoia sequoia@ithaka.org
-Uploaders: barry@productops.com
+Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
