@@ -48,6 +48,8 @@ zip watchable-sidecar.jar application.properties
 #     we need libssl which is provided by libssl-dev 
 #     and libcrypt which is provided by libc6
 #     and ntpd for time synchronization
+#     and at for the postinst script
+#     and java-common for update-java-alternatives
 cat << EOF > ${BUILD_DIR}/DEBIAN/control
 Package: $PACKAGE_NAME
 Version: $VERSION
@@ -55,7 +57,7 @@ Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
-Depends: libc6, libssl-dev, ntp, at
+Depends: libc6, libssl-dev, ntp, at, java-common
 Replaces: 
 Description: BOLT-1611 deploy a looker.jar via sagoku
    - Sagoku Deployable

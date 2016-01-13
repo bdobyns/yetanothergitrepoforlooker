@@ -7,6 +7,14 @@
 # setup for looker on a naked new box
 # see http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 
+# JAVA   --------- --------- --------- --------- --------- --------- ---------
+WHICHJAVA=`update-java-alternatives -l`
+JAVABIN=`which java`
+if [ -z "$WHICHJAVA" ] || [ -z "$JAVABIN" ] ; then
+    echo "NO JAVA AVAILABLE"
+    exit 42
+fi
+
 # SYSCTL --------- --------- --------- --------- --------- --------- ---------
 SYSCTLOOKER=/etc/sysctl.d/87-looker.conf
 if [ ! -f $SYSCTLOOKER ] ; then
