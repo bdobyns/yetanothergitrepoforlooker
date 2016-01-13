@@ -15,7 +15,9 @@ HOMELOOKER=/home/looker
 CONTENT=$SRC_DIR/deploy-looker/content
 
 # the built debian is run as
-# apt-get install -y --force-yes $PACKAGE_NAME
+#     apt-get install -y --force-yes $PACKAGE_NAME
+# it is downloaded into the target in
+#     /opt/download/${DEPLOYMENT_ID}.deb
 
 # copy package contents to build directory
 cp -pr $CONTENT/* ${BUILD_DIR}/
