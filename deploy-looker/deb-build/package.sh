@@ -55,7 +55,7 @@ Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
-Depends: libc6, libssl-dev, ntp
+Depends: /usr/bin/at, libc6, libssl-dev, ntp
 Replaces: 
 Description: BOLT-1611 deploy a looker.jar via sagoku
    - Sagoku Deployable
@@ -74,11 +74,7 @@ chmod 0755 ${BUILD_DIR}/DEBIAN/postinst
 
 # creating the pre-install script for this package
 # the pre-install script is executed in the deployed instance
-cat << EOF > ${BUILD_DIR}/DEBIAN/preinst
-#!/bin/bash
-echo $PACKAGE_NAME "Can do some pre-install actions by this script" > /tmp/pre-install-${PACKAGE_NAME}.log
-bash -x $HOMELOOKER/scripts/preinst-part1.sh 2>&1 >> /tmp/pre-install-${PACKAGE_NAME}.log
-EOF
+cat $CONTENT/home/looker/scripts/preinst*.sh >${BUILD_DIR}/DEBIAN/preinst
 chmod 0755 ${BUILD_DIR}/DEBIAN/preinst
 
 # there's a weird sagoku build error, trying to clean it up

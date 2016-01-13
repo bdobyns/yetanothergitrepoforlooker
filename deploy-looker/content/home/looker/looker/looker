@@ -1,4 +1,13 @@
 #!/bin/sh
+### BEGIN INIT INFO
+# Provides:          looker
+# Required-Start:    ntp
+# Required-Stop:     
+# Should-Start:      
+# Should-Stop:       
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
 
 cd $HOME/looker 
 # set your java memory- there should be over 1.5G of system memory 
@@ -105,12 +114,14 @@ fixcrypt() {
 
 case "$1" in
   start)
+    if [ $UID -eq 0 ] ; then exit 42 ; fi
     start
 	;;
   stop)
     stop
 	;;
   restart)
+	if [ $UID -eq 0 ] ; then exit 42 ; fi
 	echo "Restarting Looker Web Application" "looker"
         stop
         sleep 3
@@ -127,6 +138,7 @@ case "$1" in
         fi
         ;;
   *)
+	# this seems convenient, but dangerous.  
         java -jar looker.jar $*
         ;;
 esac

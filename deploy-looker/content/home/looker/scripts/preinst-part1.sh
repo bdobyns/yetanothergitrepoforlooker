@@ -1,5 +1,5 @@
-#!/bin/bash
-# this script is executed on the TARGET MACHINE
+#!/bin/bash -e
+# this script is executed on the TARGET MACHINE before the deb package is unpacked
 # blame: barry@productops.com jan 2016
 # BOLT-1611 deploy a looker jar via Sagoku
 # preinst.sh
@@ -38,3 +38,5 @@ looker     soft     nofile     4096
 looker     hard     nofile     4096
 EOF
 fi
+
+exit 0
