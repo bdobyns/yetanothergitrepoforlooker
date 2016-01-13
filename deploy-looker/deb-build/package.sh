@@ -14,10 +14,19 @@ echo "Using package $PACKAGE_NAME and version ${VERSION}"
 HOMELOOKER=/home/looker
 CONTENT=$SRC_DIR/deploy-looker/content
 
-# the built debian is run as
-#     apt-get install -y --force-yes $PACKAGE_NAME
-# it is downloaded into the target in
+# the built debian is downloaded into the target in
 #     /opt/download/${DEPLOYMENT_ID}.deb
+#
+# the built debian is arranged to be run (by sagoku) as
+#     apt-get install -y --force-yes $PACKAGE_NAME
+#
+# or maybe (if there's no dependencies that need to be resolved) this can work
+#     dpkg -i /opt/download/${DEPLOYMENT_ID}.deb
+#
+# so you can do this to try and re-install
+#    sudo cp /opt/download/${DEPLOYMENT_ID}.deb  /var/cache/apt/archives/${PACKAGE_NAME}_0.0.0_all.deb
+#    sudo apt-get install $PACKAGE_NAME
+# which will let you see better error messages from apt-get
 
 # copy package contents to build directory
 cp -pr $CONTENT/* ${BUILD_DIR}/
@@ -46,7 +55,7 @@ Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
-Depends: libc6, libssl-dev, ntpd
+Depends: libc6, libssl-dev, ntp
 Replaces: 
 Description: BOLT-1611 deploy a looker.jar via sagoku
    - Sagoku Deployable
