@@ -2,8 +2,8 @@
 
 ### BEGIN INIT INFO
 # Provides:          looker
-# Required-Start:    ntp
-# Required-Stop:     
+# Required-Start:    ntp nginx $local_fs $remote_fs $network
+# Required-Stop:     $network nginx ntp
 # Should-Start:      
 # Should-Stop:       
 # Default-Start:     2 3 4 5

@@ -12,6 +12,8 @@ LOOKERHOME=/home/looker
 # set the permissions and ownership properly ----------------------------------
 chown -R looker:looker $LOOKERHOME
 chmod -R +x $LOOKERHOME
+# this should not be world-readable
+chmod -R root:root /etc/letsencrypt
 
 # fix up a startup script -----------------------------------------------------
 
@@ -20,24 +22,60 @@ chmod -R +x $LOOKERHOME
 #     service looker status
 # to work right (for sagoku healthcheck)
 
-cp $LOOKERHOME/scripts/looker-wrapper.sh /etc/init.d/looker
+WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
+cp $WRAPPER/etc/init.d/looker
 update-rc.d looker defaults
 
-# start up the watchable sidecar (see csp-ftp-service) ------------------------
+# SSL KEYS ----------------------------------------------------------------------
+# set up letsencrypt on this box so we can generate a suitable key
+# this relies on some stuff payloded in from /etc/letsencrypt
 
+# first fetch the client
+cd /home/ubuntu
+git clone https://github.com/letsencrypt/letsencrypt
+chown -R ubuntu:ubuntu letsencrypt
 
-# reconfigure nginx using the sample ------------------------------------------
-# received from Looker http://www.looker.com/docs/setup-and-management/on-prem-install/sample-nginx-config
+# generate (or re-generate) a cert.
+# we use the unmodified nginx install and webroot for this
+ME=`hostname -f`
+./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+SSL=$LOOKERHOME/looker/ssl
+mkdir -p $SSL
+LE=/etc/letsencrypt/archive/$ME
+
+# the letsencrypt-auto above needs to have generated keys successfully
+for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem 
+do
+    if [ ! -f $F ] ; then exit 42 ; fi
+done
+
+# now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup
+openssl pkcs12 -export \
+  -in $LE/cert1.pem \
+  -CAfile $LE/fullchain1.pem \
+  -infile $LE/privkey1.pem \
+  -out $SSL/looker.p12
+
+keytool -importkeystore \
+  -srckeystore $SSL/looker.p12 \
+  -destkeystore $SSL/looker.jks \
+  -storetype pkcs12 \
+  -alias 1
+
+# NGINX ----------------------------------------------------------------------
+# reconfigure nginx using the sample received from Looker 
+#     http://www.looker.com/docs/setup-and-management/on-prem-install/sample-nginx-config
 ME=`hostname -f`
 NGC=/etc/nginx/nginx.conf
 cp $NGC ${NGC}.save
-# right now we don't have ssl certs so we can't use ssl.
-# otherwise all we'd have to change is the domain name.
-cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ -e /listen/s/443/80/ -e /proxy_pass/s/https/http/ -e '/ssl/s/^/#/' >$NGC
+
+# change the domain name, and then point to the keys we made earlier 
+cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ 
+    -e "s+/etc/looker/ssl/certs/self-ssl.crt+/etc/letsencrypt/archive/$ME/cert1.pem+" \
+    -e "s+/etc/looker/ssl/certs/self-ssl.key+/etc/letsencrypt/archive/$ME/privkey1.pem+" \ >$NGC
 service nginx restart
 
-
 # start up looker as the right user. ------------------------------------------
-echo sudo su - looker $LOOKERHOME/scripts/postinst-part2.sh | at "now +1 minute"
+echo sudo su - looker $WRAPPER start | at "now +1 minute"
 
 exit 0
