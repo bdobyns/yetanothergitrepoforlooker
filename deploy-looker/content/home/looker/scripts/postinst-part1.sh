@@ -4,6 +4,9 @@
 # BOLT-1611 deploy a looker jar via Sagoku
 # postinst.sh
 
+# debugging
+exit 0
+
 # setup for looker on a naked new box
 # see http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 
