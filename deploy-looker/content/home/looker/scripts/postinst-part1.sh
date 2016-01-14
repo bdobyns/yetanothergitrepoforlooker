@@ -23,7 +23,7 @@ chmod -R root:root /etc/letsencrypt
 # to work right (for sagoku healthcheck)
 
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
-cp $WRAPPER/etc/init.d/looker
+cp $WRAPPER  /etc/init.d/looker
 update-rc.d looker defaults
 
 # SSL KEYS ----------------------------------------------------------------------
