@@ -61,7 +61,7 @@ Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
-Depends: libc6, libssl-dev, ntp, at, java-common
+Depends: libc6, libssl-dev, ntp, at, java-common, nginx
 Replaces: 
 Description: BOLT-1611 deploy a looker.jar via sagoku
    - Sagoku Deployable
