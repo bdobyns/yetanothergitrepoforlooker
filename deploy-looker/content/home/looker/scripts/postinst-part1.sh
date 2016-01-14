@@ -19,17 +19,14 @@ chmod -R +x /home/looker
 # but it should allow 
 #     service looker status
 # to work right (for sagoku healthcheck)
-chmod 0750 $LOOKERSTARTUPSCRIPT
+
 ln -s $LOOKERSTARTUPSCRIPT /etc/init.d/looker
-for i in 2 3 5 
-do 
-ln -s $LOOKERSTARTUPSCRIPT /etc/rc${i}.d/S87looker
-done
+update-rc.d looker defaults
 
 # start up the watchable sidecar (see csp-ftp-service) ------------------------
 
 
 # start up looker as the right user. ------------------------------------------
-echo sudo -u looker -g looker ~looker/scripts/postinst-part2.sh | at "now +1 minute"
+echo sudo su - looker /home/looker/scripts/postinst-part2.sh | at "now +1 minute"
 
 exit 0

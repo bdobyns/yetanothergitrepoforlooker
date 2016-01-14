@@ -60,7 +60,7 @@ fi
 
 if ! grep looker /etc/passwd >/dev/null
 then
-sudo useradd -m -g looker looker
+sudo useradd -m -s /bin/bash -g looker looker
 fi
 
 # ulimits --------- --------- --------- --------- --------- --------- ---------
