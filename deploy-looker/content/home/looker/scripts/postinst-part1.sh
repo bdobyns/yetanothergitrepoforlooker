@@ -4,14 +4,14 @@
 # BOLT-1611 deploy a looker jar via Sagoku
 # postinst.sh
 
-LOOKERSTARTUPSCRIPT="~looker/looker/looker"
+LOOKERSTARTUPSCRIPT="/home/looker/looker/looker"
 
 # setup for looker on a naked new box
 # see http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 
 # set the permissions and ownership properly ----------------------------------
-chown -R looker:looker ~looker
-chmod +x ~looker/scripts/* $LOOKERSTARTUPSCRIPT 
+chown -R looker:looker /home/looker
+chmod +x /home/looker
 
 # fix up a startup script -----------------------------------------------------
 

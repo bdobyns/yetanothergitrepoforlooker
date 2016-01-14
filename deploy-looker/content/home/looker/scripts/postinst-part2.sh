@@ -4,10 +4,11 @@
 # BOLT-1611 deploy a looker jar via Sagoku
 # postinst.sh
 
-if [ $UID -eq 0 ] ; then
+if [ $UID -eq 0 ] 
+then
     exit 42
 else
-    cd ~looker/looker
+    cd /home/looker/looker
     ./looker start
 fi
 
