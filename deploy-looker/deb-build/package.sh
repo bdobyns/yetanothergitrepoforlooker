@@ -14,8 +14,19 @@ echo "Using package $PACKAGE_NAME and version ${VERSION}"
 HOMELOOKER=/home/looker
 CONTENT=$SRC_DIR/deploy-looker/content
 
-# the built debian is run as
-# apt-get install -y --force-yes $PACKAGE_NAME
+# the built debian is downloaded into the target in
+#     /opt/download/${DEPLOYMENT_ID}.deb
+#
+# the built debian is arranged to be run (by sagoku) as
+#     apt-get install -y --force-yes $PACKAGE_NAME
+#
+# or maybe (if there's no dependencies that need to be resolved) this can work
+#     dpkg -i /opt/download/${DEPLOYMENT_ID}.deb
+#
+# so you can do this to try and re-install
+#    sudo cp /opt/download/${DEPLOYMENT_ID}.deb  /var/cache/apt/archives/${PACKAGE_NAME}_0.0.0_all.deb
+#    sudo apt-get install $PACKAGE_NAME
+# which will let you see better error messages from apt-get
 
 # copy package contents to build directory
 cp -pr $CONTENT/* ${BUILD_DIR}/
@@ -32,11 +43,17 @@ echo 'server.port = 8080' >application.properties
 zip watchable-sidecar.jar application.properties
 )
 
+# because of restrictive licensing we obscure the name of looker.jar
+# beacuse of github limitations we cannot check looker.jar into github
+aws s3 cp s3://sequoia-install/looker/024bbe05-cb57-41ed-86b8-48a3a88351ed ${BUILD_DIR}$HOMELOOKER/looker/looker.jar
+
 # creating the main control file for this package
 # according to the http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 #     we need libssl which is provided by libssl-dev 
 #     and libcrypt which is provided by libc6
 #     and ntpd for time synchronization
+#     and at for the postinst script
+#     and java-common for update-java-alternatives
 cat << EOF > ${BUILD_DIR}/DEBIAN/control
 Package: $PACKAGE_NAME
 Version: $VERSION
@@ -44,7 +61,7 @@ Maintainer: Ithaka Sequoia barry@productops.com
 Architecture: all
 Section: main
 Priority: extra
-Depends: libc6, libssl-dev, ntpd
+Depends: libc6, libssl-dev, ntp, at, java-common
 Replaces: 
 Description: BOLT-1611 deploy a looker.jar via sagoku
    - Sagoku Deployable
@@ -63,11 +80,7 @@ chmod 0755 ${BUILD_DIR}/DEBIAN/postinst
 
 # creating the pre-install script for this package
 # the pre-install script is executed in the deployed instance
-cat << EOF > ${BUILD_DIR}/DEBIAN/preinst
-#!/bin/bash
-echo $PACKAGE_NAME "Can do some pre-install actions by this script" > /tmp/pre-install-${PACKAGE_NAME}.log
-bash -x $HOMELOOKER/scripts/preinst-part1.sh 2>&1 >> /tmp/pre-install-${PACKAGE_NAME}.log
-EOF
+cat $CONTENT/home/looker/scripts/preinst*.sh >${BUILD_DIR}/DEBIAN/preinst
 chmod 0755 ${BUILD_DIR}/DEBIAN/preinst
 
 # there's a weird sagoku build error, trying to clean it up
