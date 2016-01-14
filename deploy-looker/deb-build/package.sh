@@ -73,8 +73,8 @@ EOF
 # the post-install script is executed in the deployed instance
 cat << END > ${BUILD_DIR}/DEBIAN/postinst
 #!/bin/bash
-echo $PACKAGE_NAME "Can do some post-install actions by this script" > /tmp/post-install-${PACKAGE_NAME}.log
-bash -x $HOMELOOKER/scripts/postinst-part1.sh 2>&1 >> /tmp/post-install-${PACKAGE_NAME}.log
+echo $PACKAGE_NAME "Can do some post-install actions by this script" >/tmp/post-install-${PACKAGE_NAME}.log
+bash -x $HOMELOOKER/scripts/postinst-part1.sh 2>&1 >>/tmp/post-install-${PACKAGE_NAME}.log
 END
 chmod 0755 ${BUILD_DIR}/DEBIAN/postinst
 

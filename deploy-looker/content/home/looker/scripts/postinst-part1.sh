@@ -24,6 +24,7 @@ chmod -R root:root /etc/letsencrypt
 
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 cp $WRAPPER  /etc/init.d/looker
+chmod +rx /etc/init.d/looker
 update-rc.d looker defaults
 
 # SSL KEYS ----------------------------------------------------------------------
@@ -34,6 +35,8 @@ update-rc.d looker defaults
 cd /home/ubuntu
 git clone https://github.com/letsencrypt/letsencrypt
 chown -R ubuntu:ubuntu letsencrypt
+# and cd down into it's directory
+cd letsencrypt
 
 # generate (or re-generate) a cert.
 # we use the unmodified nginx install and webroot for this
