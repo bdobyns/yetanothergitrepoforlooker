@@ -52,18 +52,28 @@ do
     if [ ! -f $F ] ; then exit 42 ; fi
 done
 
+echo looker >$SSL/keystorepass
 # now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
   -CAfile $LE/fullchain1.pem \
-  -infile $LE/privkey1.pem \
-  -out $SSL/looker.p12
+  -inkey $LE/privkey1.pem \
+  -out $SSL/looker.p12 \
+  -passin pass: -passout file:$SSL/keystorepass
 
-keytool -importkeystore \
+cat >$SSL/stuff <<EOF
+looker
+looker
+looker
+EOF
+cat $SSL/stuff | keytool -importkeystore \
   -srckeystore $SSL/looker.p12 \
+  -srcstoretype pkcs12 \
   -destkeystore $SSL/looker.jks \
-  -storetype pkcs12 \
+  -deststoretype JKS \
   -alias 1
+# make sure java can read the files
+chown -R looker:looker $SSL
 
 # NGINX ----------------------------------------------------------------------
 # reconfigure nginx using the sample received from Looker 
