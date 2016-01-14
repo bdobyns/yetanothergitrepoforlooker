@@ -35,6 +35,7 @@ case $1 in
 	git push git@git.${ENV}.cirrostratus.org:repos/looker.git $GIT_BRANCH:master
 	;;
     ssh)
+	shift
 	set -x
 	if [ ! -z $1 ] ; then 
 	    ssh ubuntu@looker${1}.${ENV}.cirrostratus.org || ssh ubuntu@looker01.${ENV}.cirrostratus.org || ssh ubuntu@looker02.${ENV}.cirrostratus.org	
