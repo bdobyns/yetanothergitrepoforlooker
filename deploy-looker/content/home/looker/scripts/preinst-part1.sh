@@ -44,7 +44,7 @@ fi
 LIMITSCONF=/etc/security/limits.conf
 if ! grep ^looker $LIMITSCONF >/dev/null
 then
-echo >>$LIMITSCONF <<EOF
+cat >>$LIMITSCONF <<EOF
 looker     soft     nofile     4096
 looker     hard     nofile     4096
 EOF
