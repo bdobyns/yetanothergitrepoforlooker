@@ -43,6 +43,10 @@ echo 'server.port = 8080' >application.properties
 zip watchable-sidecar.jar application.properties
 )
 
+# because of restrictive licensing we obscure the name of looker.jar
+# beacuse of github limitations we cannot check looker.jar into github
+aws s3 cp s3://sequoia-install/looker/024bbe05-cb57-41ed-86b8-48a3a88351ed ${BUILD_DIR}$HOMELOOKER/looker/looker.jar
+
 # creating the main control file for this package
 # according to the http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 #     we need libssl which is provided by libssl-dev 
