@@ -1,5 +1,5 @@
 #!/bin/bash -e
-# this script is executed on the sagoku build machine
+# this script is executed on the SAGOKU BUILD MACHINE
 # blame: barry@productops.com jan 2016
 # BOLT-1611 deply a looker jar via Sagoku
 #   - Sagoku Deployable
@@ -21,11 +21,11 @@ CONTENT=$SRC_DIR/deploy-looker/content
 #     apt-get install -y --force-yes $PACKAGE_NAME
 #
 # or maybe (if there's no dependencies that need to be resolved) this can work
-#     dpkg -i /opt/download/${DEPLOYMENT_ID}.deb
+#     dpkg -i /opt/downloads/${DEPLOYMENT_ID}.deb
 #
 # so you can do this to try and re-install
-#    sudo cp /opt/download/${DEPLOYMENT_ID}.deb  /var/cache/apt/archives/${PACKAGE_NAME}_0.0.0_all.deb
-#    sudo apt-get install $PACKAGE_NAME
+#    sudo cp /opt/downloads/${DEPLOYMENT_ID}.deb  /var/cache/apt/archives/${PACKAGE_NAME}_0.0.0_all.deb
+#    sudo apt-get install -V -y --force-yes $PACKAGE_NAME
 # which will let you see better error messages from apt-get
 
 # copy package contents to build directory

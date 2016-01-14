@@ -1,11 +1,34 @@
-#!/bin/bash -e
+#!/bin/bash 
 # this script is executed on the TARGET MACHINE before the deb package is unpacked
 # blame: barry@productops.com jan 2016
 # BOLT-1611 deploy a looker jar via Sagoku
 # preinst.sh
 
+# summary of how this script can be called:
+#        * <new-preinst> `install'
+#        * <new-preinst> `install' <old-version>
+#        * <new-preinst> `upgrade' <old-version>
+#        * <old-preinst> `abort-upgrade' <new-version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+
 # setup for looker on a naked new box
 # see http://www.looker.com/docs/setup-and-management/on-prem-install/installation
+
+case "$1" in
+    install|upgrade)
+    ;;
+
+    abort-upgrade)
+    ;;
+
+    *)
+        echo "preinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
 
 # JAVA   --------- --------- --------- --------- --------- --------- ---------
 WHICHJAVA=`update-java-alternatives -l`
@@ -45,6 +68,9 @@ LIMITSCONF=/etc/security/limits.conf
 if ! grep ^looker $LIMITSCONF >/dev/null
 then
 cat >>$LIMITSCONF <<EOF
+
+# created by the ithaka looker installer
+# $0
 looker     soft     nofile     4096
 looker     hard     nofile     4096
 EOF
