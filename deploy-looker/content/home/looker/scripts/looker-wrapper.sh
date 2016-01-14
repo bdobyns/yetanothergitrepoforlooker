@@ -10,10 +10,15 @@
 # Default-Stop:      0 1 6
 ### END INIT INFO
 
-cd /home/looker/looker
+LOOKERBIN=/home/looker/looker 
+if [ ! -d $LOOKERBIN ] ; then 
+    exit 42
+fi 
+
+cd $LOOKERBIN
 # start up looker as the right user. ------------------------------------------
-if [ $USER != looker ] ; then 
-    sudo su - looker /home/looker/looker/looker $*
+if [ -z $USER ] || [ $USER != looker ] ; then 
+    sudo su - looker $LOOKERBIN/looker $*
 else
-    /home/looker/looker/looker $*    
+    $LOOKERBIN/looker $*    
 fi 
