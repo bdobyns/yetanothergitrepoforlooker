@@ -4,8 +4,6 @@
 # BOLT-1611 deploy a looker jar via Sagoku
 # postinst.sh
 
-LOOKERSTARTUPSCRIPT="/home/looker/looker/looker"
-
 # setup for looker on a naked new box
 # see http://www.looker.com/docs/setup-and-management/on-prem-install/installation
 
@@ -20,7 +18,7 @@ chmod -R +x /home/looker
 #     service looker status
 # to work right (for sagoku healthcheck)
 
-ln -s $LOOKERSTARTUPSCRIPT /etc/init.d/looker
+cp /home/looker/scripts/looker-wrapper.sh /etc/init.d/looker
 update-rc.d looker defaults
 
 # start up the watchable sidecar (see csp-ftp-service) ------------------------
