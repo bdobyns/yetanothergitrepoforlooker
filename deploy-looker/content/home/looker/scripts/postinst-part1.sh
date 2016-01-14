@@ -11,7 +11,7 @@ LOOKERSTARTUPSCRIPT="/home/looker/looker/looker"
 
 # set the permissions and ownership properly ----------------------------------
 chown -R looker:looker /home/looker
-chmod +x /home/looker
+chmod -R +x /home/looker
 
 # fix up a startup script -----------------------------------------------------
 
