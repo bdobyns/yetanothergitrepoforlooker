@@ -36,7 +36,11 @@ cp $NGC ${NGC}.save
 cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ -e /listen/s/443/80/ -e /proxy_pass/s/https/http/ -e '/ssl/s/^/#/' >$NGC
 service nginx restart
 
+
 # start up looker as the right user. ------------------------------------------
+LSC=$LOOKERHOME/looker/lookerstart.cfg
+cp $LSC /tmp/lookerstart.old
+(cat /tmp/lookerstart.old  ; set | grep APP_DYNAMICS ; set | grep SGK ) >$LSC
 echo sudo su - looker $LOOKERHOME/scripts/postinst-part2.sh | at "now +1 minute"
 
 exit 0
