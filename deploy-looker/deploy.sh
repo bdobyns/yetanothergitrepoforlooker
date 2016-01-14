@@ -36,29 +36,31 @@ case $1 in
 	;;
     ssh)
 	set -x
-	ssh ubuntu@looker01.${ENV}.cirrostratus.org || ssh ubuntu@looker02.${ENV}.cirrostratus.org 
+	if [ ! -z $1 ] ; then 
+	    ssh ubuntu@looker${1}.${ENV}.cirrostratus.org || ssh ubuntu@looker01.${ENV}.cirrostratus.org || ssh ubuntu@looker02.${ENV}.cirrostratus.org	
+	else
+	    ssh ubuntu@looker01.${ENV}.cirrostratus.org || ssh ubuntu@looker02.${ENV}.cirrostratus.org 
+	fi
 	;;
     put)
 	shift
 	if [ -z $1 ] ; then
 	    echo "ERROR - no files to put"
 	    givehelp
-	    exit
+	else
+            set -x
+	    scp $* ubuntu@looker01.${ENV}.cirrostratus.org:/home/ubuntu || scp $* ubuntu@looker02.${ENV}.cirrostratus.org:/home/ubuntu
 	fi
-
-        set -x
-	scp $* ubuntu@looker01.${ENV}.cirrostratus.org:/home/ubuntu || scp $* ubuntu@looker02.${ENV}.cirrostratus.org:/home/ubuntu
 	;;
     get)
 	shift
 	if [ -z $1 ] || [ -z $2 ] ; then
 	    echo "ERROR - no files to get"
 	    givehelp
-	    exit
-        fi
-
-	set -x
-	scp ubuntu@looker01.${ENV}.cirrostratus.org:/home/ubuntu/"$1" "$2" || scp ubuntu@looker02.${ENV}.cirrostratus.org:/home/ubuntu/"$1" "$2"
+        else
+	    set -x
+	    scp ubuntu@looker01.${ENV}.cirrostratus.org:/home/ubuntu/"$1" "$2" || scp ubuntu@looker02.${ENV}.cirrostratus.org:/home/ubuntu/"$1" "$2"
+	fi
 	;;
     *)
 	givehelp
