@@ -35,20 +35,27 @@ update-rc.d looker defaults
 cd /home/ubuntu
 if [ ! -d letsencrypt ] ; then
     git clone https://github.com/letsencrypt/letsencrypt
+    cd letsencrypt
+    # hopefully this fetches all the dependencies
+    ./letsencrypt-auto certonly --help
+else 
+    cd letsencrypt
 fi
-chown -R ubuntu:ubuntu letsencrypt
 # and cd down into it's directory
-cd letsencrypt
+
 
 # generate (or re-generate) a cert.
 # we use the unmodified nginx install and webroot for this
 ME=`hostname -f`
-SSL=$LOOKERHOME/looker/ssl
+SSL=$LOOKERHOME/ssl
 mkdir -p $SSL
 LE=/etc/letsencrypt/archive/$ME
 # check to see if this particular cert is already present.  it may be.
 if [ ! -f $LE/cert1.pem ] ; then
     ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+else
+    # this should renew if already present
+    ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
 fi
 
 # the letsencrypt-auto above needs to have generated keys successfully
