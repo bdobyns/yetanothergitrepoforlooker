@@ -55,6 +55,10 @@ do
     fi
 done
 
+# this should probably not be world-readable, but nginx needs it, as does /etc/init.d/looker
+chown -R www-data:www-data /etc/letsencrypt
+chmod +rx /etc/letsencrypt
+
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
 echo looker >$SSL/keystorepass
 # now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup

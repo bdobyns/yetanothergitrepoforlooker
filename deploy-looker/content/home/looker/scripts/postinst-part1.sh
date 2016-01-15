@@ -12,8 +12,8 @@ LOOKERHOME=/home/looker
 # set the permissions and ownership properly ----------------------------------
 chown -R looker:looker $LOOKERHOME
 chmod -R +x $LOOKERHOME
-# this should not be world-readable
-chown -R root:root /etc/letsencrypt
+# this probably should not be world-readable, but nginx needs it as does looker
+chown -R www-data:www-data /etc/letsencrypt
 
 # fix up a startup script -----------------------------------------------------
 
