@@ -11,15 +11,16 @@ LOOKERHOME=/home/looker
 
 # SSL KEYS ----------------------------------------------------------------------
 # set up letsencrypt on this box so we can generate a suitable key
-# this relies on some stuff payloded in from /etc/letsencrypt
+# this relies on some stuff payloded in from /etc/letsencrypt - or does it?
 
 # first fetch the client
 cd /home/ubuntu
 if [ ! -d letsencrypt ] ; then
     git clone https://github.com/letsencrypt/letsencrypt
     cd letsencrypt
-    # hopefully this fetches all the dependencies
+    # hopefully --help fetches all the dependencies
     # in any event, it uses package management to determine if they're needed
+    # so it can't be run while the package manager is still installing looker
     ./letsencrypt-auto certonly --help
 else 
     cd letsencrypt
@@ -42,15 +43,22 @@ else
 fi
 
 # the letsencrypt-auto above needs to have generated keys successfully
+# make sure all the files we need are present and accounted for
 for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem 
 do
-    if [ ! -f $F ] ; then exit 42 ; fi
+    if [ ! -f $F ] 
+    then 
+	echo "ERROR: no $F"
+	echo  '      maybe this command failed mysteriously?'
+	echo ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+	exit 42
+    fi
 done
 
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
 echo looker >$SSL/keystorepass
 # now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup
-rm $SSL/looker.p12
+rm -f $SSL/looker.p12
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
   -CAfile $LE/fullchain1.pem \
@@ -59,7 +67,7 @@ openssl pkcs12 -export \
   -passin pass: -passout file:$SSL/keystorepass
 
 # the $SSL/3pass file just keeps the keytool from hanging on input
-rm $SSL/looker.jks
+rm -f $SSL/looker.jks
 ( cat $SSL/keystorepass ;cat $SSL/keystorepass ;cat $SSL/keystorepass ) >$SSL/3pass
 cat $SSL/3pass | keytool -importkeystore \
   -srckeystore $SSL/looker.p12 \
@@ -70,9 +78,14 @@ cat $SSL/3pass | keytool -importkeystore \
 # make sure java can read the files
 chown -R looker:looker $SSL
 
-if [ ! -f $SSL/looker.p12 ] || [ ! -f $SSL/looker.jks ] ; then
-    exit 42
-fi    
+# make sure all the files we need are present and accounted for
+for F in $SSL/looker.p12 $SSL/looker.jks $SSL/keystorepass
+do
+    if [ ! -f $F ] ; then 
+	echo "ERROR: no $F"
+	exit 42 
+    fi
+done
 
 # NGINX ----------------------------------------------------------------------
 # reconfigure nginx using the sample received from Looker 
@@ -88,10 +101,11 @@ cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ \
     -e "s+/etc/looker/ssl/certs/self-ssl.crt+/etc/letsencrypt/archive/$ME/cert1.pem+" \
     -e "s+/etc/looker/ssl/private/self-ssl.key+/etc/letsencrypt/archive/$ME/privkey1.pem+"  >$NGC
 
-service nginx restart
+if ! service nginx restart
+then
+    echo "ERROR nginx failed to restart"
+fi
 
 # start up looker as the right user. ------------------------------------------
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 echo sudo su - looker $WRAPPER start | at "now +1 minute"
-
-exit 0

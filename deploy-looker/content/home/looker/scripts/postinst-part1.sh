@@ -32,3 +32,5 @@ update-rc.d looker defaults
 #       waiting two minutes, so the intall of this one runs to completion
 echo bash $LOOKERHOME/scripts/postinst-part2.sh | at "now +2 minute"
 
+# done
+exit 0
