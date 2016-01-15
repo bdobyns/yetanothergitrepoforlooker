@@ -19,6 +19,7 @@ if [ ! -d letsencrypt ] ; then
     git clone https://github.com/letsencrypt/letsencrypt
     cd letsencrypt
     # hopefully this fetches all the dependencies
+    # in any event, it uses package management to determine if they're needed
     ./letsencrypt-auto certonly --help
 else 
     cd letsencrypt
