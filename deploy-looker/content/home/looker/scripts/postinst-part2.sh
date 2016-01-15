@@ -57,7 +57,7 @@ done
 
 # this should probably not be world-readable, but nginx needs it, as does /etc/init.d/looker
 chown -R www-data:www-data /etc/letsencrypt
-chmod +rx /etc/letsencrypt
+find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
 
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
 echo looker >$SSL/keystorepass
