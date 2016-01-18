@@ -8,13 +8,10 @@
 # try to use package management to get the work complete.
 
 LOOKERHOME=/home/looker
-
+USELETSENCRYPT=false       # able to turn off letsencrypt.org stuff
 
 
 # MAKE SSL KEYS ----------------------------------------------------------------------
-# set up letsencrypt on this box so we can generate a suitable key
-# this relies on some stuff payloded in from /etc/letsencrypt - or does it?
-
 ME=`hostname -f`
 SSL=$LOOKERHOME/ssl
 mkdir -p $SSL
@@ -23,11 +20,14 @@ mkdir -p $LE
 KEYPASS=looker
 
 # LETSENCRYPT.ORG
-# we try to use letsencrypt.org if there is no file yet
-if [ ! -f $LE/cert1.pem ] ; then
-    # first fetch the client
+# we try to use letsencrypt.org LIVE RIGHT NOW if there is no file yet
+if [ $USELETSENCRYPT == true ] ; then
+  # check to see if this particular cert is already present.  it may be.
+  if [ ! -f $LE/cert1.pem ] ; then
+    # set up letsencrypt on this box so we can generate a suitable key
     cd /home/ubuntu
     if [ ! -d letsencrypt ] ; then
+        # first fetch the client
 	git clone https://github.com/letsencrypt/letsencrypt
 	cd letsencrypt
         # hopefully --help fetches all the dependencies
@@ -40,13 +40,11 @@ if [ ! -f $LE/cert1.pem ] ; then
     fi
     # generate (or re-generate) a cert.
     # we use the unmodified nginx install and webroot for this
-    # check to see if this particular cert is already present.  it may be.
-
     ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
 #else
-    # this should renew if already present ?
+    # I think this is how you renew, but not completely sure.
     # ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
-
+  fi
 fi
 
 # SELF-SIGNED
@@ -63,13 +61,12 @@ fi
 
 # some of this keygen ought to have succeeded.  ron says trust, but verify.
 # make sure all the files we need are present and accounted for
-for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem 
+for F in  $LE/cert1.pem $LE/privkey1.pem # $LE/fullchain1.pem
 do
     if [ ! -f $F ] 
     then 
 	echo "ERROR: no $F"
-	echo  '      maybe this command failed mysteriously?'
-	echo ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+	echo  '      after trying both letsencrypt.org and self-signing'
 	exit 42
     fi
 done
@@ -88,7 +85,9 @@ echo $KEYPASS >$SSL/keystorepass
 (echo $KEYPASS ; echo $KEYPASS ; echo $KEYPASS ) >$SSL/3pass
 # now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup
 rm -f $SSL/looker.p12
-# if we used letsencrypt, there's no password for the privkey1
+
+# read privkey1.pem and cert1.pem to make looker.p12
+# if we used letsencrypt, there's no password for the privkey1, but we do have a signing chain
 if [ -f $LE/fullchain1.pem ] ; then 
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
@@ -97,7 +96,7 @@ openssl pkcs12 -export \
   -out $SSL/looker.p12 \
   -passin pass: -passout file:$SSL/keystorepass
 else
-# we used a self-signed certificate, but there IS a password, and no chain
+# we used a self-signed certificate, there IS a password, and no signing chain
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
   -inkey $LE/privkey1.pem \
@@ -105,6 +104,7 @@ openssl pkcs12 -export \
   -passin pass:$KEYPASS -passout file:$SSL/keystorepass
 fi
 
+# read looker.p12 to make looker.jks
 # this creates a java keystore, which is what looker ultimately needs
 # keytool is something like /usr/lib/jvm/jdk1.7.0_55/bin/keytool
 rm -f $SSL/looker.jks

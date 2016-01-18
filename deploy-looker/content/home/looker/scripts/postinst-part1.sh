@@ -14,6 +14,7 @@ chown -R looker:looker $LOOKERHOME
 chmod -R +x $LOOKERHOME
 # this probably should not be world-readable, but nginx needs it as does looker
 chown -R www-data:www-data /etc/letsencrypt
+find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
 
 # fix up a startup script -----------------------------------------------------
 
@@ -25,6 +26,7 @@ chown -R www-data:www-data /etc/letsencrypt
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 cp $WRAPPER  /etc/init.d/looker
 chmod +rx /etc/init.d/looker
+# make the symlinks 
 update-rc.d looker defaults
 
 # have to run the rest of the install later, 
