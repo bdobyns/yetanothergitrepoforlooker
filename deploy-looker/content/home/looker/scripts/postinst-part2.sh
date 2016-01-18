@@ -35,7 +35,7 @@ SSL=$LOOKERHOME/ssl
 mkdir -p $SSL
 LE=/etc/letsencrypt/archive/$ME
 mkdir -p $LE
-PASSWORD=looker
+KEYPASS=looker
 # check to see if this particular cert is already present.  it may be.
 if [ ! -f $LE/cert1.pem ] ; then
     ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
@@ -54,7 +54,7 @@ do
 	openssl req -x509 -newkey rsa:2048 \
 	    -keyout $LE/privkey1.pem \
 	    -out $LE/cert1.pem \
-	    -passout pass:$PASSWORD \
+	    -passout pass:$KEYPASS \
 	    -days 3650 \
 	    -subj "/C=US/ST=Michigan/L=AnnArbor/O=Ithaka.org/CN=$ME"
 #	echo "ERROR: no $F"
@@ -70,16 +70,16 @@ find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
 
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
 # store the magic password in a file
-echo $PASSWORD >$SSL/keystorepass
+echo $KEYPASS >$SSL/keystorepass
 # the $SSL/3pass file just keeps the keytool from hanging on input
-( cat $SSL/keystorepass ;cat $SSL/keystorepass ;cat $SSL/keystorepass ) >$SSL/3pass
+(echo $KEYPASS ; echo $KEYPASS ; echo $KEYPASS ) >$SSL/3pass
 # now following http://www.looker.com/docs/setup-and-management/on-prem-install/ssl-setup
 rm -f $SSL/looker.p12
 # if we used letsencrypt, there's no password for the privkey1
 if [ -f $LE/fullchain1.pem ] ; then 
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
-  -CAfile $LE/fillchain1.pem \  
+  -CAfile $LE/fullchain1.pem \  
   -inkey $LE/privkey1.pem \
   -out $SSL/looker.p12 \
   -passin pass: -passout file:$SSL/keystorepass
@@ -89,7 +89,7 @@ openssl pkcs12 -export \
   -in $LE/cert1.pem \
   -inkey $LE/privkey1.pem \
   -out $SSL/looker.p12 \
-  -passin pass:$PASSWORD -passout file:$SSL/keystorepass
+  -passin pass:$KEYPASS -passout file:$SSL/keystorepass
 fi
 
 # this creates a java keystore, which is what looker ultimately needs
