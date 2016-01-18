@@ -157,3 +157,6 @@ fi
 # we also copied the wrapper into /etc/init.d/looker in part1
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 echo sudo su - looker $WRAPPER start | at "now +1 minute"
+# the sleep is so we still see the parent running in top
+sleep 65
+exit 0
