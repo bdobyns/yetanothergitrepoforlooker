@@ -153,9 +153,16 @@ fi
 
 
 # LOOKER.JAR ------------------------------------------------------------------
-# start up looker as the right user.
+# pre-configure a user, and preload the license key
+#    see https://discourse.looker.com/t/auto-provisioning-a-looker-instance/1698
+YAMLF=$LOOKERHOME/looker/provision.yml
+TEMPL=$LOOKERHOME/looker/provision.template
+cat $TEMPL | sed -e s/looker.domain.com/$ME/ >$YAMLF
+chown looker:looker $YAMLF
+
 # we also copied the wrapper into /etc/init.d/looker in part1
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
+# looker.jar has to run as user looker
 echo sudo su - looker $WRAPPER start | at "now +1 minute"
 # the sleep is so we still see the parent running in top
 sleep 65
