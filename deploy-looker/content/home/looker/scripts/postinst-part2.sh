@@ -87,11 +87,11 @@ echo $KEYPASS >$SSL/keystorepass
 rm -f $SSL/looker.p12
 
 # read privkey1.pem and cert1.pem to make looker.p12
-# if we used letsencrypt, there's no password for the privkey1, but we do have a signing chain
 if [ -f $LE/fullchain1.pem ] ; then 
+# if we used letsencrypt, there's no password for the privkey1, but we do have a signing chain
 openssl pkcs12 -export \
   -in $LE/cert1.pem \
-  -CAfile $LE/fullchain1.pem \  
+  -CAfile $LE/fullchain1.pem \
   -inkey $LE/privkey1.pem \
   -out $SSL/looker.p12 \
   -passin pass: -passout file:$SSL/keystorepass
@@ -131,18 +131,18 @@ done
 # NGINX ----------------------------------------------------------------------
 # reconfigure nginx using the sample received from Looker 
 #     http://www.looker.com/docs/setup-and-management/on-prem-install/sample-nginx-config
-ME=`hostname -f`
 NGC=/etc/nginx/nginx.conf
 if [ ! -f ${NGC}.orig ] ; then 
     cp $NGC ${NGC}.orig
 fi
+# this is where the default index.html is kept
 USNH=/usr/share/nginx/html
 
-# change the domain name, and then point to the keys we made earlier 
+# rewrite the config to change the domain name, and then point to the keys we made earlier 
 cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ \
     -e "s+/etc/looker/ssl/certs/self-ssl.crt+/etc/letsencrypt/archive/$ME/cert1.pem+" \
     -e "s+/etc/looker/ssl/private/self-ssl.key+/etc/letsencrypt/archive/$ME/privkey1.pem+"  >$NGC
-# rewrite the index.html so that it redirects to the correct ssl page
+# rewrite the payloaded index.html so that it redirects to the correct ssl page
 cat $LOOKERHOME/nginx/index.html | sed -e s/looker.domain.com/$ME/g >$USNH/index.html
 
 if ! service nginx restart
