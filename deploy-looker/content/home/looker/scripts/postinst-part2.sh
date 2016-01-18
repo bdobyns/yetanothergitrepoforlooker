@@ -9,47 +9,49 @@
 
 LOOKERHOME=/home/looker
 
-# SSL KEYS ----------------------------------------------------------------------
+
+
+# MAKE SSL KEYS ----------------------------------------------------------------------
 # set up letsencrypt on this box so we can generate a suitable key
 # this relies on some stuff payloded in from /etc/letsencrypt - or does it?
 
-# first fetch the client
-cd /home/ubuntu
-if [ ! -d letsencrypt ] ; then
-    git clone https://github.com/letsencrypt/letsencrypt
-    cd letsencrypt
-    # hopefully --help fetches all the dependencies
-    # in any event, it uses package management to determine if they're needed
-    # so it can't be run while the package manager is still installing looker
-    ./letsencrypt-auto certonly --help
-else 
-    cd letsencrypt
-fi
-# and cd down into it's directory
-
-
-# generate (or re-generate) a cert.
-# we use the unmodified nginx install and webroot for this
 ME=`hostname -f`
 SSL=$LOOKERHOME/ssl
 mkdir -p $SSL
 LE=/etc/letsencrypt/archive/$ME
 mkdir -p $LE
 KEYPASS=looker
-# check to see if this particular cert is already present.  it may be.
+
+# LETSENCRYPT.ORG
+# we try to use letsencrypt.org if there is no file yet
 if [ ! -f $LE/cert1.pem ] ; then
+    # first fetch the client
+    cd /home/ubuntu
+    if [ ! -d letsencrypt ] ; then
+	git clone https://github.com/letsencrypt/letsencrypt
+	cd letsencrypt
+        # hopefully --help fetches all the dependencies
+        # in any event, it uses package management to determine if they're needed
+        # so it can't be run while the package manager is still installing looker
+	./letsencrypt-auto certonly --help
+    else 
+        # and cd down into it's directory
+	cd letsencrypt
+    fi
+    # generate (or re-generate) a cert.
+    # we use the unmodified nginx install and webroot for this
+    # check to see if this particular cert is already present.  it may be.
+
     ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
-else
+#else
     # this should renew if already present ?
-    ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+    # ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+
 fi
 
-# the letsencrypt-auto above needs to have generated keys successfully
-# make sure all the files we need are present and accounted for
-for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem 
-do
-    if [ ! -f $F ] 
-    then 
+# SELF-SIGNED
+# okay, letsencrypt.org failed, so try self-signing
+if [ ! -f $LE/cert1.pem ] ; then
 	# generate a self-signed certificate
 	openssl req -x509 -newkey rsa:2048 \
 	    -keyout $LE/privkey1.pem \
@@ -57,10 +59,18 @@ do
 	    -passout pass:$KEYPASS \
 	    -days 3650 \
 	    -subj "/C=US/ST=Michigan/L=AnnArbor/O=Ithaka.org/CN=$ME"
-#	echo "ERROR: no $F"
-#	echo  '      maybe this command failed mysteriously?'
-#	echo ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
-#	exit 42
+fi
+
+# some of this keygen ought to have succeeded.  ron says trust, but verify.
+# make sure all the files we need are present and accounted for
+for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem 
+do
+    if [ ! -f $F ] 
+    then 
+	echo "ERROR: no $F"
+	echo  '      maybe this command failed mysteriously?'
+	echo ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
+	exit 42
     fi
 done
 
@@ -68,8 +78,11 @@ done
 chown -R www-data:www-data /etc/letsencrypt
 find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
 
+
+
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
 # store the magic password in a file
+# we later refer to keystorepass in a command line arg to looker in lookerstart.cfg
 echo $KEYPASS >$SSL/keystorepass
 # the $SSL/3pass file just keeps the keytool from hanging on input
 (echo $KEYPASS ; echo $KEYPASS ; echo $KEYPASS ) >$SSL/3pass
@@ -93,6 +106,7 @@ openssl pkcs12 -export \
 fi
 
 # this creates a java keystore, which is what looker ultimately needs
+# keytool is something like /usr/lib/jvm/jdk1.7.0_55/bin/keytool
 rm -f $SSL/looker.jks
 cat $SSL/3pass | keytool -importkeystore \
   -srckeystore $SSL/looker.p12 \
@@ -103,7 +117,7 @@ cat $SSL/3pass | keytool -importkeystore \
 # make sure java can read the files
 chown -R looker:looker $SSL
 
-# make sure all the files we need are present and accounted for
+# make sure all the files looker needs are present and accounted for
 for F in $SSL/looker.p12 $SSL/looker.jks $SSL/keystorepass
 do
     if [ ! -f $F ] ; then 
@@ -111,6 +125,8 @@ do
 	exit 42 
     fi
 done
+
+
 
 # NGINX ----------------------------------------------------------------------
 # reconfigure nginx using the sample received from Looker 
@@ -134,6 +150,10 @@ then
     echo "ERROR nginx failed to restart"
 fi
 
-# start up looker as the right user. ------------------------------------------
+
+
+# LOOKER.JAR ------------------------------------------------------------------
+# start up looker as the right user.
+# we also copied the wrapper into /etc/init.d/looker in part1
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 echo sudo su - looker $WRAPPER start | at "now +1 minute"

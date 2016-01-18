@@ -14,20 +14,23 @@
 
 LOOKERHOME=/home/looker
 
-# looker binary needs to be present
-LOOKERBIN=$LOOKERHOME/looker 
-if [ ! -d $LOOKERBIN ] ; then 
-    echo "ERROR: no $LOOKERBIN"
+# looker binary directory needs to be present
+LBIN=$LOOKERHOME/looker 
+if [ ! -d $LBIN ] ; then 
+    echo "ERROR: no $LBIN"
     exit 42
 fi 
 
-# the letsencrypt.org needs to have generated keys
-# we need to have converted those keys to a java keychain
+# the installer needs to have generated SSL keys
+# AND needs to have converted those keys to a java keychain
 ME=`hostname -f`
 SSL=$LOOKERHOME/ssl
 LE=/etc/letsencrypt/archive/$ME
 
-for F in  $LE/cert1.pem $LE/fullchain1.pem $LE/privkey1.pem  $SSL/looker.p12  $SSL/looker.jks $SSL/keystorepass
+# the files in $LE are the ssl certificates
+# the files in $SSL are the java keychain pieces for looker
+# the files in $LBIN are the looker binaries
+for F in  $LE/cert1.pem $LE/privkey1.pem  $SSL/looker.p12  $SSL/looker.jks $SSL/keystorepass $LBIN/looker.jar $LBIN/looker
 do
     if [ ! -f $F ] ; then 
 	echo "ERROR: no $F"
@@ -37,10 +40,10 @@ done
 
 
 
-cd $LOOKERBIN
+cd $LBIN
 # start up looker as the right user. ------------------------------------------
 if [ -z $USER ] || [ $USER != looker ] ; then 
-    sudo su - looker $LOOKERBIN/looker $*
+    sudo su - looker $LBIN/looker $*
 else
-    $LOOKERBIN/looker $*    
+    $LBIN/looker $*    
 fi 
