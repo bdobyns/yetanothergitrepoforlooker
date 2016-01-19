@@ -11,7 +11,6 @@ LOOKERHOME=/home/looker
 USE_LETSENCRYPT=false       # able to turn off letsencrypt.org stuff
 USE_NGINX_PROXY=false       # use nginx for the proxy?  
 
-# MAKE SSL KEYS ----------------------------------------------------------------------
 ME=`hostname -f`
 SSL=$LOOKERHOME/ssl
 mkdir -p $SSL
@@ -19,11 +18,13 @@ LE=/etc/letsencrypt/archive/$ME
 mkdir -p $LE
 KEYPASS=looker
 
-# LETSENCRYPT.ORG
+# MAKE SSL KEYS ---------------------------------------------------------------
+try_letsencrypt() {
+# LETSENCRYPT.ORG -------------------------------------------------------------
 # we try to use letsencrypt.org LIVE RIGHT NOW if there is no file yet
 if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
   # check to see if this particular cert is already present.  it may be.
-  if [ ! -f $LE/cert1.pem ] ; then
+  if [ ! -f $LE/cert1.pem ] || [ ! -f $LE/privkey1.pem ] ; then
     # set up letsencrypt on this box so we can generate a suitable key
     cd /home/ubuntu
     if [ ! -d letsencrypt ] ; then
@@ -40,16 +41,56 @@ if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
     fi
     # generate (or re-generate) a cert.
     # we use the unmodified nginx install and webroot for this
-    ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
-#else
+    # and we ask for a certificate for basically any $SGK_APP hosts in this env
+    ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html \
+	-d $ME \
+        -d ${SGK_APP}01.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}02.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}03.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}04.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}05.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}06.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}07.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}08.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}09.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}10.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}11.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}12.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}13.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}14.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}15.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}16.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}17.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}18.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}19.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}20.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}21.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}22.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}23.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}24.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}25.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}26.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}27.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}28.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	-d ${SGK_APP}29.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
+	--email barry@productops.com --agree-tos
+  else
+    echo "did not run letsencrypt: already have keys $LE/cert1.pem and $LE/privkey1.pem"
+# else
     # I think this is how you renew, but not completely sure.
     # ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
   fi
+else
+    echo "did not run letsencrypt because USE_LETSENCRYPT == '$USE_LETSENCRYPT' "
 fi
+}
 
-# SELF-SIGNED
+try_self_signed() {
+# SELF-SIGNED -----------------------------------------------------------------
 # okay, letsencrypt.org failed, so try self-signing
-if [ ! -f $LE/cert1.pem ] ; then
+if [ ! -f $LE/cert1.pem ] || [ ! -f $LE/privkey1.pem ] ; then
+        # delete the trust chain, if self-signing
+        rm -rf $LE/fullchain1.pem
 	# generate a self-signed certificate
 	openssl req -x509 -newkey rsa:2048 \
 	    -keyout $LE/privkey1.pem \
@@ -57,8 +98,13 @@ if [ ! -f $LE/cert1.pem ] ; then
 	    -passout pass:$KEYPASS \
 	    -days 3650 \
 	    -subj "/C=US/ST=Michigan/L=AnnArbor/O=Ithaka.org/CN=$ME"
+else
+    echo "did not self-sign: already have keys $LE/cert1.pem and $LE/privkey1.pem"
 fi
+}
 
+has_keys(){
+# DID WE GET KEYS -------------------------------------------------------------
 # some of this keygen ought to have succeeded.  ron says trust, but verify.
 # make sure all the files we need are present and accounted for
 for F in  $LE/cert1.pem $LE/privkey1.pem # $LE/fullchain1.pem
@@ -66,15 +112,15 @@ do
     if [ ! -f $F ] 
     then 
 	echo "ERROR: no $F"
-	echo  '      after trying both letsencrypt.org and self-signing'
 	exit 42
     fi
 done
+}
 
+make_java_keystore(){
 # this should probably not be world-readable, but nginx needs it, as does /etc/init.d/looker
 chown -R www-data:www-data /etc/letsencrypt
 find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
-
 
 
 # LOOKER.JAR NEEDS A JAVA KEYSTORE --------------------------------------------
@@ -116,7 +162,10 @@ cat $SSL/3pass | keytool -importkeystore \
   -alias 1
 # make sure java can read the files
 chown -R looker:looker $SSL
+}
 
+has_jks() {
+# DID JAVA KEYSTORE WORK ------------------------------------------------------
 # make sure all the files looker needs are present and accounted for
 for F in $SSL/looker.p12 $SSL/looker.jks $SSL/keystorepass
 do
@@ -125,9 +174,10 @@ do
 	exit 42 
     fi
 done
-
 echo " "
+}
 
+start_nginx() {
 # NGINX OR IPTABLES -----------------------------------------------------------
 if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; then
     # NGINX -------------------------------------------------------------------
@@ -149,11 +199,32 @@ if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullcha
     # rewrite the payloaded index.html so that it redirects to the correct ssl page
     cat $LOOKERHOME/nginx/index.html | sed -e s/looker.domain.com/$ME/g >$USNH/index.html
     
-    if ! service nginx restart
-    then
-	echo "ERROR nginx failed to restart"
+    # decide what to do based on whether it's up already
+    if service nginx status >/dev/null ; then
+	# nginx already running
+	if ! service nginx restart
+	then
+	    echo "ERROR nginx failed to restart"
+	fi
+    else
+	# nginx not already running
+	if ! service nginx start
+	then
+	    echo "ERROR nginx failed to start"
+	fi
     fi
+else
+    if [ ! -f $LE/fullchain1.pem ] ; then
+	echo "cannot start nginx because no $LE/fullchain1.pem"
+    else
+	echo "cannot start nginx because USE_NGINX_PROXY == $USE_NGINX_PROXY"
+    fi
+fi
+}
 
+start_iptables() {
+if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; then
+    echo "should use nginx, not iptables"
 else
     # IPTABLES --------------------------------------------------------------------
     # iptables always works, even when nginx does not
@@ -165,18 +236,24 @@ else
 
     # set up to use iptables
     LKFWD=/etc/network/if-up.d/looker-https-forward
-cat >$LKFWD <<EOF
+    # create the LKFWD if it doesn't exist
+    if [ ! -f $LKFWD ] ; then
+        cat >$LKFWD <<EOF
 #!/bin/sh
 # Forward HTTPS traffic to the Looker app
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 9999
 EOF
-    chmod 755 $LKFWD
-    $LKFWD
+        chmod 755 $LKFWD
+    fi
+    # start it if there's no rule yet corresponds
+    if ! iptables -t nat -L | grep ^REDIRECT | grep dpt:https | grep 9999 >/dev/null
+	$LKFWD
+    fi
 fi
+}
 
 
-
-
+start_looker() {
 # LOOKER.JAR ------------------------------------------------------------------
 # pre-configure a user, and preload the license key
 #    see https://discourse.looker.com/t/auto-provisioning-a-looker-instance/1698
@@ -189,6 +266,56 @@ chown looker:looker $YAMLF
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 # looker.jar has to run as user looker
 echo sudo su - looker $WRAPPER start | at "now +1 minute"
-# the sleep is so we still see the parent running in top
-sleep 65
-exit 0
+}
+
+
+# NORMALLY RUNS WITH NO ARGS --------------------------------------------------
+# but in the edge case where we have args, just do one function
+case $1 in 
+    letsencrypt)
+	USE_LETSENCRYPT=true
+	try_letsencrypt
+	has_keys  # did it work?
+	;;
+    selfsigned)
+	try_self_signed
+	has_keys  # did it work?
+	;;
+    keystore|javakeystore|java_keystore)
+	has_keys  # java keystore uses the ssl keys
+	make_java_keystore
+	has_jks   # did it work?
+	;;
+    nginx)
+	has_keys  # nginx needs the ssl keys
+	start_nginx
+	;;
+    iptables)
+	start_iptables
+	;;
+    looker)
+	has_jks   # looker needs the java keys
+	start_looker
+	;;
+    -h|--help|help)
+	echo "usage:   $0  [ letsencrypt | selfsigned | keystore | nginx | iptables | looker ]"
+	echo "         $0  letsencrypt   - try to get the keys from letsencrypt.org"
+	echo "         $0  selfsigned    - make self-signed keys locally"
+	echo "         $0  keystore      _ make the java keystore from the pem"
+	echo "         $0  nginx         - edit nginx configs, start nginx"
+	echo "         $0  iptables      - stop nginx, start iptables"
+	echo "         $0  looker        - edit looker provision.yml, start looker"
+	exit 42
+	;;
+    *)
+	try_letsencrypt
+	try_self_signed
+	has_keys
+	make_java_keystore
+	has_jks
+	start_nginx
+	start_iptables
+	start_looker
+	;;
+esac
+
