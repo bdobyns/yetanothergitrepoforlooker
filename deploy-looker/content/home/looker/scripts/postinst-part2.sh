@@ -8,8 +8,8 @@
 # try to use package management to get the work complete.
 
 LOOKERHOME=/home/looker
-USELETSENCRYPT=false       # able to turn off letsencrypt.org stuff
-
+USE_LETSENCRYPT=false       # able to turn off letsencrypt.org stuff
+USE_NGINX_PROXY=false       # use nginx for the proxy?  
 
 # MAKE SSL KEYS ----------------------------------------------------------------------
 ME=`hostname -f`
@@ -21,7 +21,7 @@ KEYPASS=looker
 
 # LETSENCRYPT.ORG
 # we try to use letsencrypt.org LIVE RIGHT NOW if there is no file yet
-if [ $USELETSENCRYPT == true ] ; then
+if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
   # check to see if this particular cert is already present.  it may be.
   if [ ! -f $LE/cert1.pem ] ; then
     # set up letsencrypt on this box so we can generate a suitable key
@@ -128,29 +128,55 @@ done
 
 
 
-# NGINX ----------------------------------------------------------------------
-# reconfigure nginx using the sample received from Looker 
-#     http://www.looker.com/docs/setup-and-management/on-prem-install/sample-nginx-config
-NGC=/etc/nginx/nginx.conf
-if [ ! -f ${NGC}.orig ] ; then 
-    cp $NGC ${NGC}.orig
+# NGINX OR IPTABLES -----------------------------------------------------------
+if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; 
+    # NGINX -------------------------------------------------------------------
+    # we can only use NGINX if we have a proper cert from a CA, for some unknown reason
+    #
+    # reconfigure nginx using the sample received from Looker 
+    #     http://www.looker.com/docs/setup-and-management/on-prem-install/sample-nginx-config
+    NGC=/etc/nginx/nginx.conf
+    if [ ! -f ${NGC}.orig ] ; then 
+	cp $NGC ${NGC}.orig
+    fi
+    # this is where the default index.html is kept
+    USNH=/usr/share/nginx/html
+
+    # rewrite the config to change the domain name, and then point to the keys we made earlier 
+    cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ \
+	-e "s+/etc/looker/ssl/certs/self-ssl.crt+/etc/letsencrypt/archive/$ME/cert1.pem+" \
+	-e "s+/etc/looker/ssl/private/self-ssl.key+/etc/letsencrypt/archive/$ME/privkey1.pem+"  >$NGC
+    # rewrite the payloaded index.html so that it redirects to the correct ssl page
+    cat $LOOKERHOME/nginx/index.html | sed -e s/looker.domain.com/$ME/g >$USNH/index.html
+    
+    if ! service nginx restart
+    then
+	echo "ERROR nginx failed to restart"
+    fi
+
+else
+    # IPTABLES --------------------------------------------------------------------
+    # iptables always works, even when nginx does not
+
+    # turn off nginx if it's on
+    if service nginx status ; then
+	service nginx stop
+    fi
+
+    # set up to use iptables
+    LKFWD=/etc/network/if-up.d/looker-https-forward
+cat >$LKFWD <<EOF
+#!/bin/sh
+# Forward HTTPS traffic to the Looker app
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 9999
+EOF
+    chmod 755 $LKFWD
+    $LKFWD
 fi
-# this is where the default index.html is kept
-USNH=/usr/share/nginx/html
-
-# rewrite the config to change the domain name, and then point to the keys we made earlier 
-cat $LOOKERHOME/nginx/looker.conf | sed -e s/looker.domain.com/$ME/ \
-    -e "s+/etc/looker/ssl/certs/self-ssl.crt+/etc/letsencrypt/archive/$ME/cert1.pem+" \
-    -e "s+/etc/looker/ssl/private/self-ssl.key+/etc/letsencrypt/archive/$ME/privkey1.pem+"  >$NGC
-# rewrite the payloaded index.html so that it redirects to the correct ssl page
-cat $LOOKERHOME/nginx/index.html | sed -e s/looker.domain.com/$ME/g >$USNH/index.html
-
-if ! service nginx restart
-then
-    echo "ERROR nginx failed to restart"
-fi
 
 
+
+if 
 
 # LOOKER.JAR ------------------------------------------------------------------
 # pre-configure a user, and preload the license key
