@@ -6,7 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DatabaseConnection {
+public final class DatabaseConnection {
 
     private static final String DEFAULT_PROTOCOL = "jdbc:mysql:";
     private static final String DEFAULT_HOST = "logjammer-rds01.barry.cirrostratus.org";

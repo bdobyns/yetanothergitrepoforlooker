@@ -72,10 +72,10 @@ public class LogLineProcessor {
                 logMap.put(fieldName.replace('-','_'), validateValue((ValueNode)currentNode));
             } else if (currentNode.size() > 0) {// non empty array or object
                 try {
-                    if(isArrayOfValues(currentNode)) { // Each item in array should be new line in new table.
-                        currentNode = convertValuesToObjects(fieldName, (ArrayNode) currentNode);
-                    }
-                    if(currentNode.isArray()) { // but not an array of values. See above.
+                    if(currentNode.isArray()) {
+                        if(isArrayOfValues(currentNode)) { // Each item in array should be new line in new table.
+                            currentNode = convertValuesToObjects(fieldName, (ArrayNode) currentNode);
+                        }
                         for(JsonNode shouldBeObjectNode : currentNode) {
                             processLine((ObjectNode)shouldBeObjectNode, updatedKeyChain, tableName, fieldName);
                         }
