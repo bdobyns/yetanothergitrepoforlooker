@@ -22,7 +22,7 @@ KEYPASS=looker
 try_letsencrypt() {
 # LETSENCRYPT.ORG -------------------------------------------------------------
 # we try to use letsencrypt.org LIVE RIGHT NOW if there is no file yet
-if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
+if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT = true ] ; then
   # check to see if this particular cert is already present.  it may be.
   if [ ! -f $LE/cert1.pem ] || [ ! -f $LE/privkey1.pem ] ; then
     # set up letsencrypt on this box so we can generate a suitable key
@@ -60,7 +60,7 @@ if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
     # ./letsencrypt-auto run --webroot -w /usr/share/nginx/html -d $ME --email barry@productops.com --agree-tos
   fi
 else
-    echo "did not run letsencrypt because USE_LETSENCRYPT == '$USE_LETSENCRYPT' "
+    echo "did not run letsencrypt because USE_LETSENCRYPT = '$USE_LETSENCRYPT' "
 fi
 }
 
@@ -158,7 +158,7 @@ echo " "
 
 start_nginx() {
 # NGINX OR IPTABLES -----------------------------------------------------------
-if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; then
+if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY = true ] && [ -f $LE/fullchain1.pem ] ; then
     # NGINX -------------------------------------------------------------------
     # we can only use NGINX if we have a proper cert from a CA, for some unknown reason
     #
@@ -196,13 +196,13 @@ else
     if [ ! -f $LE/fullchain1.pem ] ; then
 	echo "cannot start nginx because no $LE/fullchain1.pem"
     else
-	echo "cannot start nginx because USE_NGINX_PROXY == $USE_NGINX_PROXY"
+	echo "cannot start nginx because USE_NGINX_PROXY = '$USE_NGINX_PROXY'"
     fi
 fi
 }
 
 start_iptables() {
-if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; then
+if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY = true ] && [ -f $LE/fullchain1.pem ] ; then
     echo "should use nginx, not iptables"
 else
     # IPTABLES --------------------------------------------------------------------
