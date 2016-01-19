@@ -224,8 +224,9 @@ iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 9
 EOF
         chmod 755 $LKFWD
     fi
-    # start it if there's no rule yet corresponds
+    # start it if there's no rule yet that corresponds
     if ! iptables -t nat -L | grep ^REDIRECT | grep dpt:https | grep 9999 >/dev/null
+    then
 	$LKFWD
     fi
 fi
