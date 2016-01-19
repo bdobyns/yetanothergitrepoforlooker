@@ -2,6 +2,6 @@ license_key: "28C7-047A-BD5E-03E8-C8AE"
 host_url: "https://looker.domain.com"
 user:
   first_name: "Barry"
-  last_name: "Dobyns""
+  last_name: "Dobyns"
   email: "barry@productops.com"
   password: "looker"
