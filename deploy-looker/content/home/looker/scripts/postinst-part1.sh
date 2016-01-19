@@ -12,8 +12,9 @@ LOOKERHOME=/home/looker
 # set the permissions and ownership properly ----------------------------------
 chown -R looker:looker $LOOKERHOME
 chmod -R +x $LOOKERHOME
-# this should not be world-readable
-chown -R root:root /etc/letsencrypt
+# this probably should not be world-readable, but nginx needs it as does looker
+chown -R www-data:www-data /etc/letsencrypt
+find /etc/letsencrypt -type d -exec chmod ugo+rx "{}" ";"
 
 # fix up a startup script -----------------------------------------------------
 
@@ -25,6 +26,7 @@ chown -R root:root /etc/letsencrypt
 WRAPPER=$LOOKERHOME/scripts/looker-wrapper.sh 
 cp $WRAPPER  /etc/init.d/looker
 chmod +rx /etc/init.d/looker
+# make the symlinks 
 update-rc.d looker defaults
 
 # have to run the rest of the install later, 
@@ -32,3 +34,5 @@ update-rc.d looker defaults
 #       waiting two minutes, so the intall of this one runs to completion
 echo bash $LOOKERHOME/scripts/postinst-part2.sh | at "now +2 minute"
 
+# done
+exit 0
