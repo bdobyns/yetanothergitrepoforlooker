@@ -126,10 +126,10 @@ do
     fi
 done
 
-
+echo " "
 
 # NGINX OR IPTABLES -----------------------------------------------------------
-if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; 
+if [ ! -z $USE_NGINX_PROXY ] && [ $USE_NGINX_PROXY == true ] && [ -f $LE/fullchain1.pem ] ; then
     # NGINX -------------------------------------------------------------------
     # we can only use NGINX if we have a proper cert from a CA, for some unknown reason
     #
@@ -159,7 +159,7 @@ else
     # iptables always works, even when nginx does not
 
     # turn off nginx if it's on
-    if service nginx status ; then
+    if service nginx status >/dev/null ; then
 	service nginx stop
     fi
 
@@ -176,7 +176,6 @@ fi
 
 
 
-if 
 
 # LOOKER.JAR ------------------------------------------------------------------
 # pre-configure a user, and preload the license key
