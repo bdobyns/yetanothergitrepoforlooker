@@ -39,41 +39,20 @@ if [ ! -z $USE_LETSENCRYPT ] && [ $USE_LETSENCRYPT == true ] ; then
         # and cd down into it's directory
 	cd letsencrypt
     fi
+    # we ask for a SAN certificate for basically any $SGK_APP hosts in this env
+    SAN=/tmp/$$.hosts.txt
+    echo >$SAN
+    for i in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39
+    do 
+	# make sure we don't include $ME twice, dunno if this will muck up letsencrypt, but no need to find out
+	H=${SGK_APP}${i}.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN 
+	if [ $H != $ME ] ; then
+	    echo -d $H >>$SAN
+	fi
+    done
     # generate (or re-generate) a cert.
     # we use the unmodified nginx install and webroot for this
-    # and we ask for a certificate for basically any $SGK_APP hosts in this env
-    ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html \
-	-d $ME \
-        -d ${SGK_APP}01.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}02.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}03.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}04.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}05.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}06.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}07.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}08.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}09.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}10.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}11.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}12.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}13.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}14.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}15.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}16.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}17.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}18.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}19.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}20.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}21.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}22.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}23.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}24.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}25.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}26.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}27.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}28.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	-d ${SGK_APP}29.${SGK_ENVIRONMENT}.$SGK_BASE_DOMAIN \
-	--email barry@productops.com --agree-tos
+    ./letsencrypt-auto certonly --webroot -w /usr/share/nginx/html d $ME `cat $SAN` --email barry@productops.com --agree-tos
   else
     echo "did not run letsencrypt: already have keys $LE/cert1.pem and $LE/privkey1.pem"
 # else
